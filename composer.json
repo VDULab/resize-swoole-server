@@ -1,0 +1,19 @@
+{
+    "name": "pom/resizeserver",
+    "description": "Websocket server implemented in swoole",
+    "type": "project",
+    "authors": [
+        {
+            "name": "VDUPom",
+            "email": "lpomero@vdu.it"
+        }
+    ],
+    "require": {
+        "php" : ">=7.0",
+        "psr/log": "^1.0",
+        "wa72/simplelogger": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {"ResizeServer\\": "src/"}
+    }
+}

@@ -1,0 +1,24 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%; }
+
+body {
+  -webkit-box-orient: vertical;
+  display: -webkit-box; }
+
+#input {
+  display: block; }
+
+.row, textarea {
+  display: flex;
+  flex: 1; }
+
+.row {
+  height: 93vh; }
+
+ul.clients {
+  padding: 2px;
+  list-style: none; }

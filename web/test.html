@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/server.css">
+    <script src="js/client.js"></script>
+  </head>
+  <body>
+    <div class="row">
+      <textarea id="log"></textarea>
+      <div>
+        <ul id="socket-list" class="clients"></ul>
+        <ul id="remote-list" class="clients remotes"></ul>
+        <ul id="viewer-list" class="clients viewers"></ul>
+      </div>
+    </div>
+    <input type="text" id="input" placeholder="Type a message to other connected clients here">
+    <button id="return">Send</button>
+    <!-- <input type="checkbox" name="logging" id="logging"><label for="logging">Log</label> -->
+    <input type="checkbox" name="ping" id="ping"><label for="ping">Ping</label>
+    <!-- <button id="home">Start</button> -->
+  </body>
+</html>
