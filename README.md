@@ -6,3 +6,5 @@ Run the server with
 php main.php
 ```
 it will listen on ```0.0.0.0:9999```
+
+Opening multiple browser windows at http://localhost:9999/test.html you should see a ping message send from each client to others
