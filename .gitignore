@@ -1,3 +1,4 @@
 vendor/
 php-doc/
+composer.lock
 *.sublime-*
