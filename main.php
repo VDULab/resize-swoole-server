@@ -5,7 +5,7 @@
  * Resize php server.
  */
 
-require __DIR__ . '/vendor/autoload.php';
+require getcwd() . '/vendor/autoload.php';
 
 use ResizeServer\WebSocketServerHandler;
 use ResizeServer\Event\MessageHandler;
@@ -13,7 +13,7 @@ use ResizeServer\Event\RequestHandler;
 use Psr\Log\LogLevel;
 use ResizeServer\ResizeLogger as Logger;
 
-$debug = LogLevel::DEBUG;
+$debug = LogLevel::INFO;
 $logger = new Logger($debug);
 
 global $argv;
@@ -24,7 +24,7 @@ $handler = new WebSocketServerHandler($logger);
 $msgHandler = new MessageHandler($handler);
 $requestHandler = new RequestHandler($handler, $root);
 
-$wsServer = new swoole_websocket_server("0.0.0.0", 9999);
+$wsServer = new swoole_websocket_server("0.0.0.0", 8080);
 
 $wsServer->set([
     'document_root' => $root,
@@ -33,7 +33,7 @@ $wsServer->set([
 ]);
 
 $wsServer->on('start', function ($server) use ($root) {
-    echo "Started on http://0.0.0.0:9999 with docroot $root \n";
+    echo "Started on http://0.0.0.0:8080 with docroot $root \n";
 });
 
 $wsServer->on('request', [$requestHandler, 'onRequest']);
