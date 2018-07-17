@@ -18,7 +18,7 @@ function dlog(text) {
   }
 }
 
-var port = 9999;
+var port = 80;
 var interval;
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function connectClient(prevWS) {
   if (prevWS) { prevWS.close() }
-  var address = 'ws://localhost:' + port + '/';
+  var address = 'ws://' + window.location.hostname + ':' + port + '/';
   console.log('Logger connecting');
   var ws = new WebSocket(address, 'logger');
   ws.addEventListener('open', function() {
