@@ -39,7 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function connectClient(prevWS) {
   if (prevWS) { prevWS.close() }
-  var address = 'ws://' + window.location.hostname + ':' + port + '/';
+  var protocol = (window.location.protocol == 'https:') ? 'wss:' : 'ws:';
+  var address = protocol + '://' + window.location.hostname + ':' + port + '/';
   console.log('Logger connecting');
   var ws = new WebSocket(address, 'logger');
   ws.addEventListener('open', function() {
