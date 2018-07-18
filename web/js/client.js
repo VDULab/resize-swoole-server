@@ -1,3 +1,4 @@
+/* global gapi*/
 function $(id) {
   return document.getElementById(id);
 }
@@ -93,10 +94,6 @@ function handleConsoleCommand(message, ws) {
   return false;
 }
 
-function start(ws) {
-  doSendMessage(ws, {value: '{"type": "requestSrc","src": "/"}'});
-}
-
 
 function doSendMessage(ws, element) {
   var command = handleConsoleCommand(element.value, ws);
@@ -107,4 +104,33 @@ function doSendMessage(ws, element) {
 }
 
 // FIXME: Wait for 1s so that HTTP Server socket is listening...
-setTimeout(function() { connectClient(); }, 1e3);
+setTimeout(function() { loadClient(); }, 1e3);
+
+  /**
+   * Sample JavaScript code for appengine.apps.services.versions.instances.get
+   * See instructions for running APIs Explorer code samples locally:
+   * https://developers.google.com/explorer-help/guides/code_samples#javascript
+   */
+
+  function loadClient() {
+    gapi.client.setApiKey('AIzaSyAhzifiPb3TXxhtTTIWJG0v3rRii6jhivk');
+    return gapi.client.load("https://appengine.googleapis.com/$discovery/google_rest?version=v1")
+        .then(function() {
+          console.log("GAPI client loaded for API");
+          execute();
+        },
+        function(err) { console.error("Error loading GAPI client for API", err); }
+        );
+  }
+  // Make sure the client is loaded before calling this method.
+  function execute() {
+    return gapi.client.appengine.apps.services.versions.instances.get({
+      "name": "apps/swoolewebsocketserver/services/default/versions/*/instances/instance-1"
+    })
+        .then(function(response) {
+                // Handle the results here (response.result has the parsed body).
+                console.log("Response", response);
+              },
+              function(err) { console.error("Execute error", err); });
+  }
+  gapi.load("client");
