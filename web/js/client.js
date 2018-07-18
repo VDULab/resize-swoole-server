@@ -71,9 +71,6 @@ function connectClient(prevWS) {
     var element = $('input');
     doSendMessage(ws, element);
   })
-  $('home').addEventListener('click', function () {
-    start(ws);
-  })
 }
 
 function handleConsoleCommand(message, ws) {
