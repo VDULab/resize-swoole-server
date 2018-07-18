@@ -18,7 +18,7 @@ function dlog(text) {
   }
 }
 
-var port = 80;
+var port = 9999;
 var interval;
 
 document.addEventListener('DOMContentLoaded', function() {
