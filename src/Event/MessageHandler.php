@@ -17,7 +17,7 @@ class MessageHandler extends AbstractEventHandler
 {
     public function onMessage(Server $server, Frame $frame)
     {
-        $this->info("receive from {$frame->fd}:{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}");
+        $this->debug("receive from {$frame->fd}:{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}");
         $this->handleMessage($server, $frame);
     }
 
@@ -26,7 +26,7 @@ class MessageHandler extends AbstractEventHandler
         try {
             $msg = json_decode($frame->data);
             $dest_txt = $msg->destination ?? "";
-            $this->info("$msg->type to $dest_txt");
+            $silent = false;
             if (isset($msg->destination) && $msg->destination !== 'server') {
                 return $this->send($server, $frame->data, $msg->destination, $frame);
             }
@@ -34,8 +34,9 @@ class MessageHandler extends AbstractEventHandler
                 case 'WebSocketConnection':
                     $this->sendConnectionCount($server);
                     break;
-
                 case 'scroll':
+                    $silent = true;
+                    // no break
                 case 'getNextSrc':
                     $this->send($server, $frame->data, 'manager', $frame);
                     break;
@@ -48,6 +49,9 @@ class MessageHandler extends AbstractEventHandler
 
                 default:
                     break;
+            }
+            if (!$silent) {
+                $this->info("$msg->type to $dest_txt");
             }
         } catch (Exception $e) {
             $this->error("exception received from {$frame->fd}:{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}");
@@ -75,7 +79,7 @@ class MessageHandler extends AbstractEventHandler
         foreach ($destinations as $fd => $protocol) {
             if (!$frame || $frame->fd != $fd) {
                 $server->push($fd, $data);
-                $this->info("Sending to $fd from worker#$server->worker_id");
+                $this->debug("Sending to $fd from worker#$server->worker_id");
             }
         }
     }

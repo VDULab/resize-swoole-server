@@ -13,12 +13,11 @@ use ResizeServer\Event\RequestHandler;
 use Psr\Log\LogLevel;
 use ResizeServer\ResizeLogger as Logger;
 
-$debug = LogLevel::DEBUG;
-$logger = new Logger($debug);
-
 global $argv;
 
 $root = $argv[1] ?? realpath(__DIR__ . '/web');
+$debug = $argv[2] ?? LogLevel::WARNING;
+$logger = new Logger($debug);
 
 $handler = new WebSocketServerHandler($logger);
 $msgHandler = new MessageHandler($handler);
