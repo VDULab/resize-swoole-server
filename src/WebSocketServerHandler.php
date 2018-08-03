@@ -62,11 +62,17 @@ class WebSocketServerHandler implements WebSocketServerInterface
 
         $response->status(101);
         $response->end();
-        $this->connections->set($request->fd, $request->header['sec-websocket-protocol']);
-
+        
+        $this->confirmHandshake($request->fd, $request->header['sec-websocket-protocol']);
+        
         $this->notice("server: handshake success with fd {$request->fd}");
-        $this->notice("Connections: {data}", ['data' => $this->connections]);
         return true;
+    }
+
+    private function confirmHandshake($fd, $protocol)
+    {
+        $this->connections->set($fd, $protocol);
+        $this->notice("Connections: {data}", ['data' => $this->connections]);
     }
 
     public function onClose(Server $server, $fd)

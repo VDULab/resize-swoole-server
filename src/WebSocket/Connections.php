@@ -64,7 +64,7 @@ class Connections implements ConnectionsInterface
 
         $protocol = (empty($protocol) || $protocol == 'all') ? null : $protocol;
         $protocol = ($protocol == 'viewers') ? 'viewer' : $protocol;
-        $filter = $this->filterList($protocol);
+        $filter = $this->filterList($protocol, $count);
         if ($logger && empty($filter) && !$count) {
             $logger->warning("Filter $protocol empty!");
             $logger->debug("Connections: {connections}", ['connections' => $this]);
@@ -73,12 +73,14 @@ class Connections implements ConnectionsInterface
         return ($count) ? count($filter) : $filter;
     }
 
-    private function filterList($protocol = null)
+    private function filterList($protocol = null, $count = false)
     {
         $filter = [];
         $noFilter = empty($protocol);
         foreach ($this->list as $key => $value) {
-            if ($noFilter || $value['protocol'] == $protocol || $value['protocol'] == 'logger') {
+            if ($noFilter
+                || $value['protocol'] == $protocol
+                || ($value['protocol'] == 'logger' && !$count)) {
                 $filter[$key] = $value['protocol'];
             }
         }
