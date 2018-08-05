@@ -19,11 +19,11 @@ $root = $argv[1] ?? realpath(__DIR__ . '/web');
 $debug = $argv[2] ?? LogLevel::WARNING;
 $logger = new Logger($debug);
 
-$handler = new WebSocketServerHandler($logger);
+$wsServer = new swoole_websocket_server("0.0.0.0", 9999);
+
+$handler = new WebSocketServerHandler($logger, $wsServer);
 $msgHandler = new MessageHandler($handler);
 $requestHandler = new RequestHandler($handler, $root);
-
-$wsServer = new swoole_websocket_server("0.0.0.0", 9999);
 
 $wsServer->set([
     'document_root' => $root,

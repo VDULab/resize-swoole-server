@@ -9,6 +9,7 @@ use Psr\Log\LoggerTrait;
 use ResizeServer\WebSocketServerInterface;
 use ResizeServer\WebSocket\ConnectionsInterface;
 use ResizeServer\WebSocket\Connections;
+use ResizeServer\Event\AutoRegisterInterface;
 
 class WebSocketServerHandler implements WebSocketServerInterface
 {
@@ -24,9 +25,13 @@ class WebSocketServerHandler implements WebSocketServerInterface
      */
     private $logger;
 
-    public function __construct(\Psr\Log\LoggerInterface $logger)
+    private $server;
+    private $handlers = [];
+
+    public function __construct(\Psr\Log\LoggerInterface $logger, \Swoole\WebSocket\Server $server)
     {
         $this->logger = $logger;
+        $this->server = $server;
         $this->connections = new Connections(Connections::buildTable());
     }
 
@@ -73,13 +78,36 @@ class WebSocketServerHandler implements WebSocketServerInterface
     {
         $this->connections->set($fd, $protocol);
         $this->notice("Connections: {data}", ['data' => $this->connections]);
+        $this->broadcastConnections($this->server);
     }
 
     public function onClose(Server $server, $fd)
     {
         $this->connections->remove($fd);
+        $this->broadcastConnections($server);
         $this->notice("client {$fd} closed from worker#$server->worker_id");
         $this->notice("Connections: {data}", ['data' => $this->connections]);
+    }
+
+    public function broadcastConnections(Server $server)
+    {
+        $sender = $server ?? $this->server();
+        $connections = $this->connections->list();
+        $message = ['type' => 'activeConnections', 'connections' => $connections];
+        $messageHandler = $this->handlers['messageHandler'];
+        /* var \ResizeServer\Event\MessageHandler */
+        $messageHandler->send($server, json_encode($message), 'logger');
+        $this->debug("broadcastConnections: {data}", ['data' => $message]);
+    }
+
+    public function registerHandler(AutoRegisterInterface $handler)
+    {
+        $this->handlers[$handler->getHandlerType()] = $handler;
+    }
+
+    public function deRegisterHandler(AutoRegisterInterface $handler)
+    {
+        unset($this->handlers[$handler->getHandlerType()]);
     }
 
     /**

@@ -16,6 +16,11 @@ class RequestHandler extends AbstractEventHandler
         $this->webRoot = $root;
     }
 
+    public function getHandlerType()
+    {
+        return 'requestHandler';
+    }
+
     public function onRequest(Request $request, Response $response)
     {
         $sent = $this->rewriteRules($request, $response);

@@ -15,6 +15,11 @@ use Psr\Log\LoggerTrait;
  */
 class MessageHandler extends AbstractEventHandler
 {
+    public function getHandlerType()
+    {
+        return 'messageHandler';
+    }
+
     public function onMessage(Server $server, Frame $frame)
     {
         $this->debug("receive from {$frame->fd}:{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}");
@@ -28,7 +33,7 @@ class MessageHandler extends AbstractEventHandler
             $dest_txt = $msg->destination ?? "";
             $silent = false;
             if (isset($msg->destination) && $msg->destination !== 'server') {
-                return $this->send($server, $frame->data, $msg->destination, $frame);
+                return $this->_send($server, $frame->data, $msg->destination, $frame);
             }
             switch ($msg->type) {
                 case 'WebSocketConnection':
@@ -38,13 +43,13 @@ class MessageHandler extends AbstractEventHandler
                     $silent = true;
                     // no break
                 case 'getNextSrc':
-                    $this->send($server, $frame->data, 'manager', $frame);
+                    $this->_send($server, $frame->data, 'manager', $frame);
                     break;
 
                 case 'messageToAll':
                 case 'notification':
                 case 'showing':
-                    $this->send($server, $frame->data, null, $frame);
+                    $this->_send($server, $frame->data, null, $frame);
                     break;
 
                 default:
@@ -64,10 +69,15 @@ class MessageHandler extends AbstractEventHandler
         $lenght = $this->getConnectionsCount('viewer');
         $response = '{"type":"WebSocketConnection", "connections": "' . $lenght . '"}';
         $this->info("Viewers: $lenght");
-        $this->send($server, $response, 'all');
+        $this->_send($server, $response, 'all');
     }
 
-    private function send(Server $server, $data, $destination, $frame = null)
+    public function send(Server $server, $data, $destination, $sourceFrame = null)
+    {
+        return $this->_send($server, $data, $destination, $sourceFrame);
+    }
+
+    private function _send(Server $server, $data, $destination, $frame = null)
     {
         $destinationsCount = $this->getConnectionsCount($destination);
         $this->debug("Destinations count: $destinationsCount");

@@ -56,7 +56,7 @@ class Connections implements ConnectionsInterface
 
     public function list()
     {
-        return $this->list->filterList();
+        return $this->filterList();
     }
 
     private function _getConnections($protocol = null, $logger = null, $count = false)

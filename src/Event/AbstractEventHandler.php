@@ -7,7 +7,7 @@ use Psr\Log\LoggerInterface;
 use ResizeServer\WebSocketServerInterface;
 use ResizeServer\WebSocket\ConnectionsInterface;
 
-class AbstractEventHandler implements LoggerInterface, ConnectionsInterface
+abstract class AbstractEventHandler implements LoggerInterface, ConnectionsInterface, AutoRegisterInterface
 {
     use LoggerTrait;
     /**
@@ -24,6 +24,7 @@ class AbstractEventHandler implements LoggerInterface, ConnectionsInterface
      */
     public function __construct(WebSocketServerInterface $handler)
     {
+        $handler->registerHandler($this);
         $this->serverHandler = $handler;
     }
 
@@ -42,4 +43,6 @@ class AbstractEventHandler implements LoggerInterface, ConnectionsInterface
     {
         return $this->serverHandler->getConnectionsCount($protocol);
     }
+
+    abstract public function getHandlerType();
 }
