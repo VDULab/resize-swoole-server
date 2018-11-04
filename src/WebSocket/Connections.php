@@ -59,17 +59,18 @@ class Connections implements ConnectionsInterface
         return $this->filterList();
     }
 
+    // phpcs:disable PSR2.Methods.MethodDeclaration.Underscore
     private function _getConnections($protocol = null, $logger = null, $count = false)
     {
 
         $protocol = (empty($protocol) || $protocol == 'all') ? null : $protocol;
         $protocol = ($protocol == 'viewers') ? 'viewer' : $protocol;
         $filter = $this->filterList($protocol, $count);
-        if ($logger && empty($filter) && !$count) {
+        if ($logger && empty($filter) && ! $count) {
             $logger->warning("Filter $protocol empty!");
             $logger->debug("Connections: {connections}", ['connections' => $this]);
         }
-        
+
         return ($count) ? count($filter) : $filter;
     }
 
@@ -80,7 +81,7 @@ class Connections implements ConnectionsInterface
         foreach ($this->list as $key => $value) {
             if ($noFilter
                 || $value['protocol'] == $protocol
-                || ($value['protocol'] == 'logger' && !$count)) {
+                || ($value['protocol'] == 'logger' && ! $count)) {
                 $filter[$key] = $value['protocol'];
             }
         }

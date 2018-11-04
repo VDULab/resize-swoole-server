@@ -47,7 +47,10 @@ class WebSocketServerHandler implements WebSocketServerInterface
             return false;
         }
 
-        $key = base64_encode(sha1($request->header['sec-websocket-key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
+        $key = base64_encode(sha1(
+            $request->header['sec-websocket-key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11',
+            true
+        ));
 
         $headers = [
             'Upgrade' => 'websocket',
@@ -67,9 +70,9 @@ class WebSocketServerHandler implements WebSocketServerInterface
 
         $response->status(101);
         $response->end();
-        
+
         $this->confirmHandshake($request->fd, $request->header['sec-websocket-protocol']);
-        
+
         $this->notice("server: handshake success with fd {$request->fd}");
         return true;
     }

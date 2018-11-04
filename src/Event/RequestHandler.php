@@ -25,7 +25,7 @@ class RequestHandler extends AbstractEventHandler
     {
         $sent = $this->rewriteRules($request, $response);
 
-        if (!$sent) {
+        if (! $sent) {
             $this->notFound($request, $response);
         }
     }

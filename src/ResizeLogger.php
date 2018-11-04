@@ -19,10 +19,11 @@ class ResizeLogger extends EchoLogger
     */
     protected function interpolate($message, array $context)
     {
-        if (!isset($context['class'])) {
+        if (! isset($context['class'])) {
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, self::TARGET_TRACE_LEVEL + 1);
             if (isset($trace[self::TARGET_TRACE_LEVEL])) {
-                $context['class'] = $trace[self::TARGET_TRACE_LEVEL]['class'] . '::' . $trace[self::TARGET_TRACE_LEVEL]['function'];
+                $context['class'] = $trace[self::TARGET_TRACE_LEVEL]['class'] .
+                    '::' . $trace[self::TARGET_TRACE_LEVEL]['function'];
             } else {
                 $context['class'] = __CLASS__;
             }
@@ -31,8 +32,8 @@ class ResizeLogger extends EchoLogger
         if (false === strpos($message, '{')) {
             return '[' . $context['class'] . '] ' . $message;
         }
-        
-        $replacements = array();
+
+        $replacements = [];
         foreach ($context as $key => $val) {
             if (null === $val || is_scalar($val) || (\is_object($val) && method_exists($val, '__toString'))) {
                 $replacements["{{$key}}"] = substr($val, 0, self::MAX_DEBUG_LENGHT);

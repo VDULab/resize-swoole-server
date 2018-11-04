@@ -33,6 +33,7 @@ $wsServer->set([
 
 $wsServer->on('start', function ($server) use ($root) {
     echo "Started on http://0.0.0.0:9999 with docroot $root \n";
+    echo "Console on http://localhost:9999/console/index.html\n";
 });
 
 $wsServer->on('request', [$requestHandler, 'onRequest']);

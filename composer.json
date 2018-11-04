@@ -14,6 +14,9 @@
         "psr/log": "^1.0",
         "wa72/simplelogger": "^1.1"
     },
+    "require-dev": {
+        "zendframework/zend-coding-standard": "^1.0"
+    },
     "autoload": {
         "psr-4": {"ResizeServer\\": "src/"}
     }

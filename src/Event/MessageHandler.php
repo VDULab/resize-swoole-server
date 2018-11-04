@@ -33,7 +33,10 @@ class MessageHandler extends AbstractEventHandler
             $dest_txt = $msg->destination ?? "";
             $silent = false;
             if (isset($msg->destination) && $msg->destination !== 'server') {
-                return $this->_send($server, $frame->data, $msg->destination, $frame);
+                $sent = $this->_send($server, $frame->data, $msg->destination, $frame);
+                if (! in_array($msg->type, $forcedHandled)) {
+                    return $sent;
+                }
             }
             switch ($msg->type) {
                 case 'WebSocketConnection':
@@ -55,11 +58,12 @@ class MessageHandler extends AbstractEventHandler
                 default:
                     break;
             }
-            if (!$silent) {
+            if (! $silent) {
                 $this->info("$msg->type to $dest_txt");
             }
         } catch (Exception $e) {
-            $this->error("exception received from {$frame->fd}:{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}");
+            $this->error("exception received from {$frame->fd}:{$frame->data},"
+                . "opcode:{$frame->opcode},fin:{$frame->finish}");
             $this->error($e);
         }
     }
@@ -77,6 +81,7 @@ class MessageHandler extends AbstractEventHandler
         return $this->_send($server, $data, $destination, $sourceFrame);
     }
 
+    // phpcs:disable PSR2.Methods.MethodDeclaration.Underscore
     private function _send(Server $server, $data, $destination, $frame = null)
     {
         $destinationsCount = $this->getConnectionsCount($destination);
@@ -87,7 +92,7 @@ class MessageHandler extends AbstractEventHandler
         $destinations = $this->getConnections($destination);
         $this->debug("Destinations: {data}", ['data' => $destinations]);
         foreach ($destinations as $fd => $protocol) {
-            if (!$frame || $frame->fd != $fd) {
+            if (! $frame || $frame->fd != $fd) {
                 $server->push($fd, $data);
                 $this->debug("Sending to $fd from worker#$server->worker_id");
             }
