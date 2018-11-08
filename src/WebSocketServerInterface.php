@@ -13,4 +13,5 @@ interface WebSocketServerInterface extends LoggerInterface, ConnectionsInterface
 {
     public function registerHandler(AutoRegisterInterface $handler);
     public function deRegisterHandler(AutoRegisterInterface $handler);
+    public function getHandler(string $type): ?object;
 }

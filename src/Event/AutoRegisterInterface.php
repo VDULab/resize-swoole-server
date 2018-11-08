@@ -8,5 +8,5 @@ interface AutoRegisterInterface
      * Get the type of handler.
      * @return String
      */
-    public function getHandlerType();
+    public static function getHandlerType();
 }

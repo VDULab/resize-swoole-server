@@ -44,5 +44,5 @@ abstract class AbstractEventHandler implements LoggerInterface, ConnectionsInter
         return $this->serverHandler->getConnectionsCount($protocol);
     }
 
-    abstract public function getHandlerType();
+    abstract public static function getHandlerType();
 }

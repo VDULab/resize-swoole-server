@@ -105,12 +105,17 @@ class WebSocketServerHandler implements WebSocketServerInterface
 
     public function registerHandler(AutoRegisterInterface $handler)
     {
-        $this->handlers[$handler->getHandlerType()] = $handler;
+        $this->handlers[$handler::getHandlerType()] = $handler;
     }
 
     public function deRegisterHandler(AutoRegisterInterface $handler)
     {
-        unset($this->handlers[$handler->getHandlerType()]);
+        unset($this->handlers[$handler::getHandlerType()]);
+    }
+
+    public function getHandler(string $type): ?object
+    {
+        return (isset($this->handlers[$type])) ? $this->handlers[$type] : null;
     }
 
     /**

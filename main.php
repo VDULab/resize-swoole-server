@@ -28,7 +28,7 @@ $requestHandler = new RequestHandler($handler, $root);
 $wsServer->set([
     'document_root' => $root,
     'enable_static_handler' => true,
-    'worker_num' => 4,
+    'worker_num' => 1,
 ]);
 
 $wsServer->on('start', function ($server) use ($root) {

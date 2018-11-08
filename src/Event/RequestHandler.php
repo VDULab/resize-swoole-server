@@ -10,13 +10,18 @@ class RequestHandler extends AbstractEventHandler
 {
     private $webRoot;
 
+    /**
+     * @var ResizeServer\Event\RewriteRuleInterface[]
+     */
+    private $rewriteRules = [];
+
     public function __construct(LoggerInterface $serverHandler, $root)
     {
         parent::__construct($serverHandler);
         $this->webRoot = $root;
     }
 
-    public function getHandlerType()
+    public static function getHandlerType(): string
     {
         return 'requestHandler';
     }
@@ -37,8 +42,25 @@ class RequestHandler extends AbstractEventHandler
         $this->debug("Not found: {request}", ['request' => $request]);
     }
 
+    public function addRewriteRule(string $name, RewriteRuleInterface $rule): void
+    {
+        $this->rewriteRules[$name] = $rule;
+    }
+
     private function rewriteRules(Request $request, Response $response)
     {
+        if (! empty($this->rewriteRules)) {
+            $this->debug("RewriteStart");
+            foreach ($this->rewriteRules as $name => $rule) {
+                $this->debug("Processing: {rule}", ['rule' => $name]);
+                if ($rule->callback($request, $response)) {
+                    $this->debug("Processing {rule}: true", ['rule' => $name]);
+                    return true;
+                }
+            }
+        } else {
+            $this->debug("No added rules");
+        }
         $uri = $request->server['request_uri'];
         if (in_array($uri, ["/slideshow", "/remote"])) {
             $response->sendfile($this->webRoot . "$uri.html");
