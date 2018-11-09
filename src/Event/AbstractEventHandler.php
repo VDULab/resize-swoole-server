@@ -4,6 +4,8 @@ namespace ResizeServer\Event;
 
 use Psr\Log\LoggerTrait;
 use Psr\Log\LoggerInterface;
+use Swoole\Http\Request;
+
 use ResizeServer\WebSocketServerInterface;
 use ResizeServer\WebSocket\ConnectionsInterface;
 
@@ -26,6 +28,11 @@ abstract class AbstractEventHandler implements LoggerInterface, ConnectionsInter
     {
         $handler->registerHandler($this);
         $this->serverHandler = $handler;
+    }
+
+    public static function requestUri(Request $request): string
+    {
+        return $request->server['request_uri'];
     }
 
     public function log($level, $data, $context = [])

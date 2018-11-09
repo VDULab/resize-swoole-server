@@ -8,8 +8,8 @@
 require __DIR__ . '/vendor/autoload.php';
 
 use ResizeServer\WebSocketServerHandler;
-use ResizeServer\Event\MessageHandler;
-use ResizeServer\Event\RequestHandler;
+use ResizeServer\WebSocket\MessageHandler;
+use ResizeServer\Http\RequestHandler;
 use Psr\Log\LogLevel;
 use ResizeServer\ResizeLogger as Logger;
 
@@ -25,10 +25,12 @@ $handler = new WebSocketServerHandler($logger, $wsServer);
 $msgHandler = new MessageHandler($handler);
 $requestHandler = new RequestHandler($handler, $root);
 
+
+
 $wsServer->set([
     'document_root' => $root,
     'enable_static_handler' => true,
-    'worker_num' => 1,
+    'worker_num' => 4,
 ]);
 
 $wsServer->on('start', function ($server) use ($root) {

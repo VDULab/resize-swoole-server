@@ -1,6 +1,6 @@
 <?php
 
-namespace ResizeServer\Event;
+namespace ResizeServer\Http;
 
 use Swoole\Http\Request;
 use Swoole\Http\Response;

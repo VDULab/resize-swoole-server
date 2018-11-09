@@ -3,13 +3,15 @@
 namespace ResizeServer;
 
 use Psr\Log\LoggerInterface;
-use ResizeServer\Event\AutoRegisterInterface;
 use ResizeServer\WebSocket\ConnectionsInterface;
+
+use ResizeServer\Event\AutoRegisterInterface;
+use ResizeServer\Http\RewriteRuleStorageInterface;
 
 /**
  * Extends Logger and Connections interfaces
  */
-interface WebSocketServerInterface extends LoggerInterface, ConnectionsInterface
+interface WebSocketServerInterface extends LoggerInterface, ConnectionsInterface, RewriteRuleStorageInterface
 {
     public function registerHandler(AutoRegisterInterface $handler);
     public function deRegisterHandler(AutoRegisterInterface $handler);

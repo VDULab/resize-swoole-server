@@ -3,7 +3,7 @@
  * MessageHandler
  */
 
-namespace ResizeServer\Event;
+namespace ResizeServer\WebSocket;
 
 use Swoole\WebSocket\Server;
 use Swoole\WebSocket\Frame;
@@ -13,6 +13,10 @@ use Swoole\Http\Response;
 use Psr\Log\LoggerTrait;
 
 use ResizeServer\WebSocketServerInterface;
+use ResizeServer\Event\AbstractEventHandler;
+use ResizeServer\Http\RequestHandler;
+use ResizeServer\Http\RewriteRuleInterface;
+use ResizeServer\Redis\Logger as MessageLogger;
 
 /**
  * MessageHandler class.
@@ -109,7 +113,7 @@ class MessageHandler extends AbstractEventHandler
     {
         $ls = [];
         $toScan = [];
-        $this->debug("Opening $path");
+        $this->info("Opening $path");
         if ($handle = opendir($path)) {
             while (false !== ($entry = readdir($handle))) {
                 if (! $this->isBlackListed($entry)) {
@@ -183,7 +187,7 @@ class MessageHandler extends AbstractEventHandler
             if (stripos($entry, $extension) == $length - strlen($extension)) {
                 return true;
             }
-            $this->debug("No match $extension $entry");
+            // $this->debug("No match $extension $entry");
         }
         return false;
     }
@@ -202,35 +206,7 @@ class MessageHandler extends AbstractEventHandler
         $rewritePaths = $ls;
         $count = count($ls);
         $this->debug('Found: {ls}', ['ls' => $count]);
-
-        $requestHandler = $this->serverHandler->getHandler(RequestHandler::getHandlerType());
-        $logger = $this;
-        $rewriteRule = new class($logger, $rewritePaths) implements RewriteRuleInterface
-        {
-            public function __construct($logger, $rewritePaths)
-            {
-                $this->logger = $logger;
-                $this->rewritePaths = $rewritePaths;
-            }
-
-            public function callback(Request $request, Response $response): bool
-            {
-                $uri = urldecode($request->server['request_uri']);
-                $this->logger->debug('Searching : {uri}', ['uri' => $uri]);
-                if (in_array($uri, $this->rewritePaths)) {
-                    if (is_file($uri)) {
-                        $this->logger->debug('Sending : {uri}', ['uri' => $uri]);
-                        $response->header('Content-Type', 'image/jpeg');
-                        $response->sendfile($uri);
-                        return true;
-                    }
-                    $this->logger->debug('Not found: {uri}', ['uri' => $uri]);
-                }
-                return false;
-            }
-        };
-        $requestHandler->addRewriteRule(self::LOCAL_DIR_RULE_NAME, $rewriteRule);
-
+        $this->serverHandler->addPaths($ls);
 
         while ($count > self::MAX_BATCH_SIZE) {
             $batch = array_splice($ls, 0, self::MAX_BATCH_SIZE);

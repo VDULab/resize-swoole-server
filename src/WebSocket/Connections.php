@@ -6,22 +6,15 @@ use Swoole\Serialize;
 use Swoole\Table;
 use Swoole\Lock;
 
+use ResizeServer\Swoole\AbstractArrayTable;
+
 /**
  * Connections.
  */
-class Connections implements ConnectionsInterface
+class Connections extends AbstractArrayTable implements ConnectionsInterface
 {
-    /**
-     * @var \Swoole\Table
-     */
-    protected $list;
 
-    /**
-     * @var \Swoole\Lock
-     */
-    protected $rw_lock;
-
-    public static function buildTable()
+    public static function buildTable(): Table
     {
         $table = new Table(1);
         $table->column('protocol', Table::TYPE_STRING, 32);
@@ -29,29 +22,16 @@ class Connections implements ConnectionsInterface
         return $table;
     }
 
-    public function __construct(Table $table)
-    {
-        $this->list = $table;
-        $this->rw_lock = new Lock(Lock::RWLOCK);
-    }
-
     public function set($id, $protocol = 'unknown')
     {
         $this->rw_lock->lock();
-        $this->list->set($id, ['protocol' => $protocol]);
+        $this->table->set($id, ['protocol' => $protocol]);
         $this->rw_lock->unlock();
     }
 
     public function get($id)
     {
-        return $this->list->get($id, 'protocol');
-    }
-
-    public function remove($id)
-    {
-        $this->rw_lock->lock();
-        $this->list->del($id);
-        $this->rw_lock->unlock();
+        return $this->table->get($id, 'protocol');
     }
 
     public function list()
@@ -78,7 +58,7 @@ class Connections implements ConnectionsInterface
     {
         $filter = [];
         $noFilter = empty($protocol);
-        foreach ($this->list as $key => $value) {
+        foreach ($this->table as $key => $value) {
             if ($noFilter
                 || $value['protocol'] == $protocol
                 || ($value['protocol'] == 'logger' && ! $count)) {

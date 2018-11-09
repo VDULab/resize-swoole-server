@@ -10,6 +10,8 @@ use ResizeServer\WebSocketServerInterface;
 use ResizeServer\WebSocket\ConnectionsInterface;
 use ResizeServer\WebSocket\Connections;
 use ResizeServer\Event\AutoRegisterInterface;
+use ResizeServer\Http\RewriteRuleStorageInterface;
+use ResizeServer\Http\RewriteRules;
 
 class WebSocketServerHandler implements WebSocketServerInterface
 {
@@ -19,6 +21,13 @@ class WebSocketServerHandler implements WebSocketServerInterface
      * @var \ResizeServer\WebSocket\Connections
      */
     private $connections;
+
+    /**
+     * Rules storage.
+     *
+     * @var \ResizeServer\Http\RewriteRuleStorageInterface
+     */
+    public $rewriteRules;
 
     /**
      * @var \Psr\Log\LoggerInterface
@@ -33,6 +42,7 @@ class WebSocketServerHandler implements WebSocketServerInterface
         $this->logger = $logger;
         $this->server = $server;
         $this->connections = new Connections(Connections::buildTable());
+        $this->rewriteRules = new RewriteRules(RewriteRules::buildTable(), $logger);
     }
 
     public function onHandshake(Request $request, Response $response)
@@ -136,6 +146,16 @@ class WebSocketServerHandler implements WebSocketServerInterface
     public function getConnectionsCount($protocol = null)
     {
         return $this->connections->getConnectionsCount($protocol);
+    }
+
+    public function addPaths(array $paths): void
+    {
+        $this->rewriteRules->addPaths($paths);
+    }
+
+    public function getRules(): array
+    {
+        return $this->rewriteRules->getRules();
     }
 
     /**
