@@ -8,6 +8,8 @@ use Swoole\Http\Response;
 use ResizeServer\Event\AbstractEventHandler;
 use ResizeServer\WebSocketServerInterface;
 
+use ResizeServer\Instruments;
+
 class RequestHandler extends AbstractEventHandler
 {
     private $webRoot;
@@ -52,7 +54,7 @@ class RequestHandler extends AbstractEventHandler
         $response->status(404);
         $response->end('Not Found!');
         if ($log) {
-            $this->info("Not found: {request}", ['request' => self::requestUri($request)]);
+            $this->warning("Not found: {request}", ['request' => self::requestUri($request)]);
             $this->debug("Full request: {request}", ['request' => $request]);
         }
     }
@@ -71,13 +73,14 @@ class RequestHandler extends AbstractEventHandler
             return true;
         }
 
+        $rulesTimer = Instruments::timerStart();
         $rewriteRules = $this->serverHandler->getRules();
         if (! empty($rewriteRules)) {
             $this->debug("RewriteStart");
-            foreach ($rewriteRules as $name => $rule) {
-                //$this->debug("Processing: {rule}", ['rule' => $name]);
+            foreach ($rewriteRules as $ruleNumber => $rule) {
                 if ($rule->callback($request, $response)) {
-                    $this->debug("Matched {rule}", ['rule' => $name]);
+                    $this->debug("Matched #{rule}", ['rule' => $ruleNumber]);
+                    Instruments::timerLog($rulesTimer, __FUNCTION__, $this);
                     return true;
                 }
             }

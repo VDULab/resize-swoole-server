@@ -206,7 +206,7 @@ class MessageHandler extends AbstractEventHandler
         $rewritePaths = $ls;
         $count = count($ls);
         $this->debug('Found: {ls}', ['ls' => $count]);
-        $this->serverHandler->addPaths($ls);
+        $ls = $this->serverHandler->addPaths($ls);
 
         while ($count > self::MAX_BATCH_SIZE) {
             $batch = array_splice($ls, 0, self::MAX_BATCH_SIZE);

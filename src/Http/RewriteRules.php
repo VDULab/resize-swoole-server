@@ -58,17 +58,13 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
                     $uri = urldecode($request->server['request_uri']);
 
                     if (in_array($uri, $this->rewritePaths)) {
-                        $fileTime = Instruments::timerStart();
-                        if (is_file($uri)) {
-                            Instruments::timerLog($fileTime, 'is_file', $this->logger);
                             $this->logger->info('Sending : {uri}', ['uri' => $uri]);
 
                             $response->header('Content-Type', 'image/jpeg');
                             $response->sendfile($uri);
                             return true;
-                        }
-                        $this->logger->notice('Not found: {uri}', ['uri' => $uri]);
                     }
+
                     return false;
                 }
             };
@@ -78,8 +74,14 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
         return $rewriteRules;
     }
 
-    public function addPaths(array $paths): void
+    public function addPaths(array $paths): array
     {
+        $pathCount = count($paths);
+        if (count($paths) > self::TABLE_MAX_COUNT) {
+            $this->logger->warning("Trying to add $pathCount paths, limit is " . self::TABLE_MAX_COUNT);
+            $paths = array_splice($paths, 0, self::TABLE_MAX_COUNT);
+            $pathCount = count($paths);
+        }
         $this->rw_lock->lock();
 
         foreach ($paths as $path) {
@@ -87,12 +89,13 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
             if ($this->table->exist($key)) {
                 $this->table->incr($key, self::COL_SEEN);
             } else {
+                self::rotateTable($this->table);
                 $this->table->set($key, [self::COL_PATH => $path, self::COL_SEEN => 1]);
             }
         }
         $this->rw_lock->unlock();
-        $pathCount = count($paths);
         $tableCount = $this->table->count();
-        $this->logger->debug("Added $pathCount rules, now at $tableCount");
+        $this->logger->info("Added $pathCount rules, now at $tableCount");
+        return $paths;
     }
 }

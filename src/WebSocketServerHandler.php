@@ -152,9 +152,9 @@ class WebSocketServerHandler implements WebSocketServerInterface
         return $this->connections->getConnectionsCount($protocol);
     }
 
-    public function addPaths(array $paths): void
+    public function addPaths(array $paths): array
     {
-        $this->rewriteRules->addPaths($paths);
+        return $this->rewriteRules->addPaths($paths);
     }
 
     public function getRules(): array
