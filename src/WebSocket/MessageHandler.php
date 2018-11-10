@@ -41,8 +41,8 @@ class MessageHandler extends AbstractEventHandler
             $dest_txt = $msg->destination ?? "";
             $silent = false;
             if (isset($msg->destination) && $msg->destination !== 'server') {
-                $sent = $this->_send($server, $frame->data, $msg->destination, $frame);
-                if (! in_array($msg->type, $forcedHandled)) {
+                $sent = $this->send($server, $frame->data, $msg->destination, $frame);
+                if ($sent && ! in_array($msg->type, $forcedHandled)) {
                     return $sent;
                 }
             }
@@ -54,7 +54,7 @@ class MessageHandler extends AbstractEventHandler
                     $silent = true;
                     // no break
                 case 'getNextSrc':
-                    $this->_send($server, $frame->data, 'manager', $frame);
+                    $this->send($server, $frame->data, 'manager', $frame);
                     break;
                 case 'scanDir':
                     $this->localDir($server, $msg, $frame);
@@ -62,7 +62,7 @@ class MessageHandler extends AbstractEventHandler
                 case 'showing':
                 case 'messageToAll':
                 case 'notification':
-                    $this->_send($server, $frame->data, null, $frame);
+                    $this->send($server, $frame->data, null, $frame);
                     break;
 
                 default:
@@ -83,16 +83,16 @@ class MessageHandler extends AbstractEventHandler
         $lenght = $this->getConnectionsCount('viewer');
         $response = '{"type":"WebSocketConnection", "connections": "' . $lenght . '"}';
         $this->info("Viewers: $lenght");
-        $this->_send($server, $response, 'all');
+        $this->send($server, $response, 'all');
     }
 
-    public function send(Server $server, $data, $destination, $sourceFrame = null)
+    public function send(Server $server, $data, $destination, $sourceFrame = null): bool
     {
         return $this->_send($server, $data, $destination, $sourceFrame);
     }
 
     // phpcs:disable PSR2.Methods.MethodDeclaration.Underscore
-    private function _send(Server $server, $data, $destination, $frame = null)
+    private function _send(Server $server, $data, $destination, $frame = null): bool
     {
         $destinationsCount = $this->getConnectionsCount($destination);
         $this->debug("Destinations count: $destinationsCount");
@@ -107,6 +107,7 @@ class MessageHandler extends AbstractEventHandler
                 $this->debug("Sending to $fd from worker#$server->worker_id");
             }
         }
+        return $destinationsCount > 0;
     }
 
     private function scanDir($path, $full = true): array
@@ -225,7 +226,7 @@ class MessageHandler extends AbstractEventHandler
         $message->images = $items;
         $message->destination = 'viewers';
         $data = json_encode($message);
-        $this->_send($server, $data, $message->destination, $frame);
+        $this->send($server, $data, $message->destination, $frame);
     }
 
     private function sendScanResponse(Server $server, array $items): void
@@ -234,6 +235,6 @@ class MessageHandler extends AbstractEventHandler
         $message->type = 'scanResponse';
         $message->dirs = $items;
         $data = json_encode($message);
-        $this->_send($server, $data, 'logger');
+        $this->send($server, $data, 'logger');
     }
 }

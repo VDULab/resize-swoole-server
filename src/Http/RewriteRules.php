@@ -42,36 +42,34 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
     public function getRules(): array
     {
         $rewriteRules = [];
-        $time = Instruments::timerStart();
         foreach ($this->table as $key => $value) {
-            // $this->logger->debug("{val}", ['val' => $value]);
-            $rewriteRules[] = new class($this->logger, [$value[self::COL_PATH]]) implements RewriteRuleInterface
-            {
-                public function __construct($logger, $rewritePaths)
-                {
-                    $this->logger = $logger;
-                    $this->rewritePaths = $rewritePaths;
-                }
-
-                public function callback(Request $request, Response $response): bool
-                {
-                    $uri = urldecode($request->server['request_uri']);
-
-                    if (in_array($uri, $this->rewritePaths)) {
-                            $this->logger->info('Sending : {uri}', ['uri' => $uri]);
-
-                            $response->header('Content-Type', 'image/jpeg');
-                            $response->sendfile($uri);
-                            return true;
-                    }
-
-                    return false;
-                }
-            };
+            $rewriteRules[] = $value[self::COL_PATH];
         }
-        Instruments::timerLog($time, __FUNCTION__, $this->logger);
 
-        return $rewriteRules;
+        $class = new class($this->logger, $rewriteRules) implements RewriteRuleInterface
+        {
+            public function __construct($logger, $rewritePaths)
+            {
+                $this->logger = $logger;
+                $this->rewritePaths = $rewritePaths;
+            }
+
+            public function callback(Request $request, Response $response): bool
+            {
+                $uri = urldecode($request->server['request_uri']);
+
+                if (in_array($uri, $this->rewritePaths)) {
+                        $this->logger->info('Sending : {uri}', ['uri' => $uri]);
+
+                        $response->header('Content-Type', 'image/jpeg');
+                        $response->sendfile($uri);
+                        return true;
+                }
+
+                return false;
+            }
+        };
+        return [$class];
     }
 
     public function addPaths(array $paths): array
@@ -89,7 +87,9 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
             if ($this->table->exist($key)) {
                 $this->table->incr($key, self::COL_SEEN);
             } else {
-                self::rotateTable($this->table);
+                if ($shrink = self::rotateTable($this->table)) {
+                    $this->logger->debug("Table reached max size, shrinked to $shrink");
+                }
                 $this->table->set($key, [self::COL_PATH => $path, self::COL_SEEN => 1]);
             }
         }

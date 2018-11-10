@@ -10,6 +10,7 @@ use ResizeServer\WebSocketServerInterface;
 use ResizeServer\WebSocket\ConnectionsInterface;
 use ResizeServer\WebSocket\Connections;
 use ResizeServer\Event\AutoRegisterInterface;
+use ResizeServer\WebSocket\MessageHandler;
 use ResizeServer\Http\RewriteRuleStorageInterface;
 use ResizeServer\Http\RewriteRules;
 
@@ -35,10 +36,13 @@ class WebSocketServerHandler implements WebSocketServerInterface
     private $logger;
 
     /**
-     * [$server description]
      * @var \Swoole\Server;
      */
     private $server;
+
+    /**
+     * @var \ResizeServer\Event\AutoRegisterInterface[]
+     */
     private $handlers = [];
 
     public function __construct(\Psr\Log\LoggerInterface $logger, \Swoole\WebSocket\Server $server)
@@ -132,6 +136,11 @@ class WebSocketServerHandler implements WebSocketServerInterface
         return (isset($this->handlers[$type])) ? $this->handlers[$type] : null;
     }
 
+    public function getMessageHandler(): MessageHandler
+    {
+        return $this->getHandler(MessageHandler::getHandlerType());
+    }
+
     /**
      * Returns the connections registered for a type.
      *
@@ -174,7 +183,7 @@ class WebSocketServerHandler implements WebSocketServerInterface
         $this->logger->log($level, $data, $context);
     }
 
-    public function getWorkerId(): ?int
+    public function getWorkerId(): int
     {
         return $this->server->worker_id;
     }
