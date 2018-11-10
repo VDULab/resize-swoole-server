@@ -5,10 +5,12 @@ namespace ResizeServer;
 use Swoole\WebSocket\Server;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
+use Swoole\Lock;
 use Psr\Log\LoggerTrait;
 use ResizeServer\WebSocketServerInterface;
 use ResizeServer\WebSocket\ConnectionsInterface;
 use ResizeServer\WebSocket\Connections;
+use ResizeServer\WebSocket\Message;
 use ResizeServer\Event\AutoRegisterInterface;
 use ResizeServer\WebSocket\MessageHandler;
 use ResizeServer\Http\RewriteRuleStorageInterface;
@@ -45,12 +47,20 @@ class WebSocketServerHandler implements WebSocketServerInterface
      */
     private $handlers = [];
 
+    /**
+     * @var \Swoole\Lock;
+     */
+    private $timer;
+
+    private $timerId = 1;
+
     public function __construct(\Psr\Log\LoggerInterface $logger, \Swoole\WebSocket\Server $server)
     {
         $this->logger = $logger;
         $this->server = $server;
         $this->connections = new Connections(Connections::buildTable());
         $this->rewriteRules = new RewriteRules(RewriteRules::buildTable(), $logger);
+        $this->timer = new Lock();
     }
 
     public function onHandshake(Request $request, Response $response)
@@ -186,5 +196,64 @@ class WebSocketServerHandler implements WebSocketServerInterface
     public function getWorkerId(): int
     {
         return $this->server->worker_id;
+    }
+
+    public function togglePlay($server, $msg, $frame): bool
+    {
+        $sliding = $this->isSliding();
+        $this->debug("sliding {sliding}", ['sliding' => ($sliding) ? 'yes' : 'no']);
+        if ($sliding) {
+            $this->info("togglePlay OFF: " . $this->timerId);
+            $this->timer->unlock();
+            return $this->notifySliding($server, false);
+        }
+
+        $id = swoole_timer_after(5000, $this->getTimerCallback());
+
+        $this->info("togglePlay ON: $id");
+        $this->timerId = $id;
+        $this->timer->lock();
+
+        return $this->notifySliding($server, true);
+    }
+
+    private function isSliding(): bool
+    {
+        $unlocked = $this->timer->trylock();
+        if ($unlocked) {
+            $this->timer->unlock();
+        }
+        return ! ($unlocked);
+    }
+
+    private function getTimerCallback(): callable
+    {
+        return function ($params = []) {
+            $sliding = $this->isSliding();
+            $this->debug("Executing timer, we are {not}sliding", ['not' => ($sliding) ? '' : 'not ']);
+            if ($sliding) {
+                $message = Message::buildNext()->toJson();
+                $this->getMessageHandler()->send($this->server, $message, 'all');
+                swoole_timer_after(5000, $this->getTimerCallback());
+            }
+        };
+    }
+
+    public function requestCurrent($server, $msg, $frame): void
+    {
+        $sliding = $this->isSliding();
+        $this->debug("We are {not}sliding", ['not' => ($sliding) ? '' : 'not ']);
+        $this->notifySliding($server, $sliding);
+    }
+
+    private function notifySliding(Server $server, bool $status): bool
+    {
+        /**
+         * @var \ResizeServer\WebSocket\Message;
+         */
+        $message = Message::buildNotification('sliding', $status);
+        $this->debug($message->toJson());
+        $this->getMessageHandler()->send($server, $message->toJson(), $message->getDestination());
+        return $status;
     }
 }

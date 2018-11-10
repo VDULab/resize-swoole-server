@@ -59,6 +59,11 @@ class MessageHandler extends AbstractEventHandler
                 case 'scanDir':
                     $this->localDir($server, $msg, $frame);
                     break;
+                case 'togglePlay':
+                case 'requestCurrent':
+                    $name = $msg->type;
+                    $this->serverHandler->$name($server, $msg, $frame);
+                    break;
                 case 'showing':
                 case 'messageToAll':
                 case 'notification':
