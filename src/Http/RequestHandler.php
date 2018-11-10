@@ -38,6 +38,9 @@ class RequestHandler extends AbstractEventHandler
      */
     public function onRequest(Request $request, Response $response): void
     {
+        $worker = $this->serverHandler->getWorkerId();
+        $uri = self::requestUri($request);
+        $this->debug("Worker #$worker is handling $uri");
         $sent = $this->rewriteRules($request, $response);
         if (! $sent) {
             $this->notFound($request, $response);
@@ -49,7 +52,8 @@ class RequestHandler extends AbstractEventHandler
         $response->status(404);
         $response->end('Not Found!');
         if ($log) {
-            $this->info("Not found: {request}", ['request' => $request]);
+            $this->info("Not found: {request}", ['request' => self::requestUri($request)]);
+            $this->debug("Full request: {request}", ['request' => $request]);
         }
     }
 
@@ -79,5 +83,6 @@ class RequestHandler extends AbstractEventHandler
             }
             $this->debug("No rules match");
         }
+        return false;
     }
 }

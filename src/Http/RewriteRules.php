@@ -11,6 +11,7 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use ResizeServer\Swoole\AbstractArrayTable;
 use ResizeServer\Http\RewriteRuleStorageInterface;
+use ResizeServer\Instruments;
 
 /**
  * RewriteRules storage table.
@@ -41,7 +42,7 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
     public function getRules(): array
     {
         $rewriteRules = [];
-        $time = -microtime(true);
+        $time = Instruments::timerStart();
         foreach ($this->table as $key => $value) {
             // $this->logger->debug("{val}", ['val' => $value]);
             $rewriteRules[] = new class($this->logger, [$value[self::COL_PATH]]) implements RewriteRuleInterface
@@ -55,27 +56,28 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
                 public function callback(Request $request, Response $response): bool
                 {
                     $uri = urldecode($request->server['request_uri']);
-                    // $this->logger->debug(
-                    //     'Searching: {uri} in {paths}',
-                    //     ['uri' => $uri, 'paths' => $this->rewritePaths]
-                    // );
+
                     if (in_array($uri, $this->rewritePaths)) {
+                        $fileTime = Instruments::timerStart();
                         if (is_file($uri)) {
+                            Instruments::timerLog($fileTime, 'is_file', $this->logger);
                             $this->logger->info('Sending : {uri}', ['uri' => $uri]);
+
                             $response->header('Content-Type', 'image/jpeg');
                             $response->sendfile($uri);
                             return true;
                         }
-                        $this->logger->info('Not found: {uri}', ['uri' => $uri]);
+                        $this->logger->notice('Not found: {uri}', ['uri' => $uri]);
                     }
                     return false;
                 }
             };
         }
-        $time += microtime(true);
-        $this->logger->debug(__FUNCTION__ . " took $time");
+        Instruments::timerLog($time, __FUNCTION__, $this->logger);
+
         return $rewriteRules;
     }
+
     public function addPaths(array $paths): void
     {
         $this->rw_lock->lock();

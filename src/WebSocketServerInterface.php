@@ -14,6 +14,8 @@ use ResizeServer\Http\RewriteRuleStorageInterface;
 interface WebSocketServerInterface extends LoggerInterface, ConnectionsInterface, RewriteRuleStorageInterface
 {
     public function registerHandler(AutoRegisterInterface $handler);
-    public function deRegisterHandler(AutoRegisterInterface $handler);
+    public function removeHandler(AutoRegisterInterface $handler);
     public function getHandler(string $type): ?object;
+
+    public function getWorkerId(): ?int;
 }

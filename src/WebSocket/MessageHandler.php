@@ -214,7 +214,7 @@ class MessageHandler extends AbstractEventHandler
             $this->debug("Sent " . self::MAX_BATCH_SIZE . ", remaining: {ls}", ['ls' => $count]);
             $this->sendUrls($server, $batch, $frame);
         }
-        $this->debug("Sent remaining: {ls}", ['ls' => $count]);
+        $this->debug("Sent {ls} remaining: 0", ['ls' => $count]);
         $this->sendUrls($server, $ls, $frame);
     }
 

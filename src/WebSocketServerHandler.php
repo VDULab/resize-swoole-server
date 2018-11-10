@@ -34,6 +34,10 @@ class WebSocketServerHandler implements WebSocketServerInterface
      */
     private $logger;
 
+    /**
+     * [$server description]
+     * @var \Swoole\Server;
+     */
     private $server;
     private $handlers = [];
 
@@ -118,7 +122,7 @@ class WebSocketServerHandler implements WebSocketServerInterface
         $this->handlers[$handler::getHandlerType()] = $handler;
     }
 
-    public function deRegisterHandler(AutoRegisterInterface $handler)
+    public function removeHandler(AutoRegisterInterface $handler)
     {
         unset($this->handlers[$handler::getHandlerType()]);
     }
@@ -168,5 +172,10 @@ class WebSocketServerHandler implements WebSocketServerInterface
     public function log($level, $data, $context = [])
     {
         $this->logger->log($level, $data, $context);
+    }
+
+    public function getWorkerId(): ?int
+    {
+        return $this->server->worker_id;
     }
 }
