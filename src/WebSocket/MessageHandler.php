@@ -238,7 +238,9 @@ class MessageHandler extends AbstractEventHandler
     {
         $message = new \stdClass();
         $message->type = 'scanResponse';
-        $message->dirs = $items;
+        $message->dirs = array_map(function ($key, $item) {
+            return ['path' => $key, 'count' => $item];
+        }, array_keys($items), $items);
         $data = json_encode($message);
         $this->send($server, $data, 'logger');
     }
