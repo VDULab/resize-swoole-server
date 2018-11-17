@@ -57,7 +57,7 @@ class MessageHandler extends AbstractEventHandler
                     $this->send($server, $frame->data, 'manager', $frame);
                     break;
                 case 'scanDir':
-                    $this->localDir($server, $msg, $frame);
+                    $this->scanDir($server, $msg, $frame);
                     break;
                 case 'togglePlay':
                 case 'requestCurrent':
@@ -115,133 +115,28 @@ class MessageHandler extends AbstractEventHandler
         return $destinationsCount > 0;
     }
 
-    private function scanDir($path, $full = true): array
+    private function scanDir(Server $server, $msg, $frame): void
     {
-        $ls = [];
-        $toScan = [];
-        $this->info("Opening $path");
-        if ($handle = opendir($path)) {
-            while (false !== ($entry = readdir($handle))) {
-                if (! $this->isBlackListed($entry)) {
-                    $child_path = $path . DIRECTORY_SEPARATOR . $entry;
-                    if (is_dir($child_path)) {
-                        $toScan[$child_path] = 0;
-                    } elseif ($this->isImage($entry)) {
-                        $ls[] = $child_path;
-                    }
-                }
-            }
-            closedir($handle);
-            // $this->debug("Closing $path : {toScan} {ls}", ['ls' => $ls, 'toScan' => $toScan]);
-            if (! empty($toScan)) {
-                foreach ($toScan as $child_path => &$count) {
-                    if ($full) {
-                        $this->debug("Scanning $child_path");
-                        $child = $this->scanDir($child_path);
-                        $ls = array_merge($ls, $child);
-                    } else {
-                        $count = $count + $this->countDir($child_path);
-                        $this->debug("$child_path has $count items");
-                    }
-                }
-            }
+        $server->task($msg);
+    }
+
+    public function relayMessage(Server $taskServer, $data, int $sourceId = null): void
+    {
+        if (! is_string($data)) {
+            $data = json_encode($data);
         }
-
-        return ($full) ? $ls : $toScan;
+        $this->send($taskServer, $data, null);
     }
 
-    private function countDir($path): int
+    public function onFinish(Server $taskServer, int $taskId, string $data): void
     {
-        $this->debug("Counting $path");
-        $count = 0;
-        if ($handle = opendir($path)) {
-            while (false !== ($entry = readdir($handle))) {
-                if (! $this->isBlackListed($entry)) {
-                    $child_path = $path . DIRECTORY_SEPARATOR . $entry;
-                    if ($this->isImage($entry)) {
-                        $count++;
-                    }
-                }
-            }
-            closedir($handle);
-        }
-        return $count;
+        $this->send($taskServer, $data, null);
+        $this->info("finished #$taskId", ['class' => 'onFinish']);
     }
 
-    public function getBlackList(): array
+    public function onPipeMessage(Server $taskServer, int $workerId, $data): void
     {
-        return [
-            '',
-            '.',
-            '..',
-        ];
-    }
-
-    public function isBlackListed(string $entry): bool
-    {
-        if (in_array($entry, $this->getBlackList())) {
-            // $this->debug("$entry is blacklisted.");
-            return true;
-        }
-        return false;
-    }
-
-    private function isImage(string $entry): bool
-    {
-        $length = strlen($entry);
-        foreach (['.jpg', '.jpeg'] as $extension) {
-            if (stripos($entry, $extension) == $length - strlen($extension)) {
-                return true;
-            }
-            // $this->debug("No match $extension $entry");
-        }
-        return false;
-    }
-
-    const MAX_BATCH_SIZE = 50;
-    const LOCAL_DIR_RULE_NAME = 'localDirRewriteRule';
-
-    private function localDir(Server $server, $msg, $frame): void
-    {
-        if (! isset($msg->full) || (isset($msg->full) && $msg->full === false)) {
-            $response = $this->scanDir($msg->path, false);
-            $this->sendScanResponse($server, $response);
-            return;
-        }
-        $ls = $this->scanDir($msg->path);
-        $rewritePaths = $ls;
-        $count = count($ls);
-        $this->debug('Found: {ls}', ['ls' => $count]);
-        $ls = $this->serverHandler->addPaths($ls);
-
-        while ($count > self::MAX_BATCH_SIZE) {
-            $batch = array_splice($ls, 0, self::MAX_BATCH_SIZE);
-            $count = count($ls);
-            $this->debug("Sent " . self::MAX_BATCH_SIZE . ", remaining: {ls}", ['ls' => $count]);
-            $this->sendUrls($server, $batch, $frame);
-        }
-        $this->debug("Sent {ls} remaining: 0", ['ls' => $count]);
-        $this->sendUrls($server, $ls, $frame);
-    }
-
-    private function sendUrls(Server $server, $items, $frame): void
-    {
-        $message = new \stdClass();
-        $message->type = 'imageUrls';
-        $message->images = $items;
-        $message->destination = 'viewers';
-        $data = json_encode($message);
-        $this->send($server, $data, $message->destination, $frame);
-    }
-
-    private function sendScanResponse(Server $server, array $items): void
-    {
-        $message = new \stdClass();
-        $message->type = 'scanResponse';
-        $message->dirs = array_map(function ($key, $item) {
-            return ['path' => $key, 'count' => $item];
-        }, array_keys($items), $items);
-        $data = json_encode($message);
-        $this->send($server, $data, 'logger');
+        $this->info("#$workerId sent a message", ['class' => 'onPipeMesssage']);
+        $this->relayMessage($taskServer, $data, $workerId);
     }
 }
