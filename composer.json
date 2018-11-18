@@ -15,9 +15,17 @@
         "wa72/simplelogger": "^1.1"
     },
     "require-dev": {
-        "zendframework/zend-coding-standard": "^1.0"
+        "zendframework/zend-coding-standard": "^1.0",
+        "phpunit/phpunit": "^7",
+        "roave/security-advisories": "dev-master"
     },
     "autoload": {
         "psr-4": {"ResizeServer\\": "src/"}
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
+        "cs-check": "vendor/bin/phpcs",
+        "cs-fix": "vendor/bin/phpcbf"
     }
 }
