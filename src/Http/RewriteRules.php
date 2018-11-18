@@ -82,15 +82,15 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
         }
         $this->rw_lock->lock();
 
-        foreach ($paths as $path) {
-            $key = md5($path);
+        foreach ($paths as $item) {
+            $key = md5($item->path);
             if ($this->table->exist($key)) {
                 $this->table->incr($key, self::COL_SEEN);
             } else {
                 if ($shrink = self::rotateTable($this->table)) {
                     $this->logger->debug("Table reached max size, shrinked to $shrink");
                 }
-                $this->table->set($key, [self::COL_PATH => $path, self::COL_SEEN => 1]);
+                $this->table->set($key, [self::COL_PATH => $item->path, self::COL_SEEN => 1]);
             }
         }
         $this->rw_lock->unlock();

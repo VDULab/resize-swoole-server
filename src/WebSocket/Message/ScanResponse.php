@@ -16,6 +16,7 @@ class ScanResponse extends BaseMessage
     public static function buildFromScanResults(array $items): ScanResponse
     {
         $pathEntries = array_map(function ($key, $item) {
+            // return ['path' => $key, 'count' => $item];
             return new PathEntry($key, $item);
         }, array_keys($items), $items);
 

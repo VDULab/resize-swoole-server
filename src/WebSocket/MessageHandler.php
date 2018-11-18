@@ -40,6 +40,7 @@ class MessageHandler extends AbstractEventHandler
             $msg = json_decode($frame->data);
             $dest_txt = $msg->destination ?? "";
             $silent = false;
+            $forcedHandled = [];
             if (isset($msg->destination) && $msg->destination !== 'server') {
                 $sent = $this->send($server, $frame->data, $msg->destination, $frame);
                 if ($sent && ! in_array($msg->type, $forcedHandled)) {

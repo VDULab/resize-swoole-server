@@ -8,7 +8,7 @@ class PathEntry
     public $count;
     public $type;
 
-    public function __construct($path, int $count = 0, string $type = 'dir')
+    public function __construct($path, string $type = 'dir', int $count = 0)
     {
         $this->path = $path;
         $this->count = $count;

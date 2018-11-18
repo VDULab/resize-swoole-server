@@ -15,9 +15,9 @@ class ImageUrls extends BaseMessage
 
     public static function buildFromScanResults(array $items): ImageUrls
     {
-        $pathEntries = array_map(function ($key, $item) {
-            return new PathEntry($key, $item);
-        }, array_keys($items), $items);
+        $pathEntries = array_map(function ($item) {
+            return $item->path;
+        }, $items);
 
         return new static($pathEntries);
     }

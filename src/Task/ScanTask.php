@@ -18,14 +18,11 @@ class ScanTask extends TaskHandler
     {
         if (! isset($msg->full) || (isset($msg->full) && $msg->full === false)) {
             $scanResult = $this->scanDir($msg->path, false);
-            $response = ScanResponse::buildFromScanResults($scanResult);
-            return $response;
+            return new ScanResponse($scanResult);
         }
         $ls = $this->scanDir($msg->path);
-        $rewritePaths = $ls;
         $count = count($ls);
         $this->debug('Found: {ls}', ['ls' => $count]);
-        $ls = $this->serverHandler->addPaths($ls);
 
         while ($count > self::MAX_BATCH_SIZE) {
             $batch = array_splice($ls, 0, self::MAX_BATCH_SIZE);
@@ -34,18 +31,18 @@ class ScanTask extends TaskHandler
             $this->sendUrls($server, $batch, $frame);
         }
         $this->debug("Sent {ls} remaining: 0", ['ls' => $count]);
-        return new ImageUrlsMessage($ls);
+        return ImageUrlsMessage::buildFromScanResults($ls);
     }
 
     private function sendUrls(Server $server, $items, $frame): void
     {
-        $message = new ImageUrlsMessage($items);
+        $message = ImageUrlsMessage::buildFromScanResults($items);
         $server->sendMessage($message, $this->sourceWorkerID);
     }
 
     private function scanDir($path, $full = true): array
     {
-        $ls = [];
+        $images = [];
         $toScan = [];
         $this->info("Opening $path");
         if ($handle = opendir($path)) {
@@ -53,29 +50,29 @@ class ScanTask extends TaskHandler
                 if (! $this->isBlackListed($entry)) {
                     $child_path = $path . DIRECTORY_SEPARATOR . $entry;
                     if (is_dir($child_path)) {
-                        $toScan[$child_path] = 0;
+                        $toScan[] = new PathEntry($child_path, 'dir');
                     } elseif ($this->isImage($entry)) {
-                        $ls[] = $child_path;
+                        $images[] = new PathEntry($child_path, 'image');
                     }
                 }
             }
             closedir($handle);
-            // $this->debug("Closing $path : {toScan} {ls}", ['ls' => $ls, 'toScan' => $toScan]);
+            // $this->debug("Closing $path : {toScan} {ls}", ['ls' => $images, 'toScan' => $toScan]);
             if (! empty($toScan)) {
-                foreach ($toScan as $child_path => &$count) {
+                foreach ($toScan as &$item) {
                     if ($full) {
-                        $this->debug("Scanning $child_path");
-                        $child = $this->scanDir($child_path);
-                        $ls = array_merge($ls, $child);
+                        $this->debug("Scanning " . $item->path);
+                        $child_content = $this->scanDir($item->path, false);
+                        $images = array_merge($images, $child_content);
                     } else {
-                        $count = $count + $this->countDir($child_path);
-                        $this->debug("$child_path has $count items");
+                        $item->count = $item->count + $this->countDir($item->path);
+                        $this->debug($item->path . " has " . $item->count . " items");
                     }
                 }
             }
         }
-
-        return ($full) ? $ls : $toScan;
+        $images = $this->serverHandler->addPaths($images);
+        return ($full) ? $images : array_merge($toScan, $images);
     }
 
     private function countDir($path): int
