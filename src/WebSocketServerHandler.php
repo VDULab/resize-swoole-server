@@ -107,7 +107,7 @@ class WebSocketServerHandler implements WebSocketServerInterface
 
     private function confirmHandshake($fd, $protocol)
     {
-        $this->connections->set($fd, $protocol);
+        $this->connections->setString($fd, $protocol);
         $this->notice("Connections: {data}", ['data' => $this->connections]);
         $this->broadcastConnections($this->server);
     }

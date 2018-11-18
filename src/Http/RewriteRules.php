@@ -72,6 +72,30 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
         return [$class];
     }
 
+    public function getString(string $key): ?string
+    {
+        return $this->table->get($key, self::COL_PATH);
+    }
+
+    public function setString(string $key, string $data): void
+    {
+        $this->rw_lock->lock();
+        $this->setOrIncrementString($key, $data);
+        $this->rw_lock->unlock();
+    }
+
+    private function setOrIncrementString(string $key, string $data): void
+    {
+        if ($this->table->exist($key)) {
+            $this->table->incr($key, self::COL_SEEN);
+        } else {
+            if ($shrink = self::rotateTable($this->table)) {
+                $this->logger->debug("Table reached max size, shrinked to $shrink");
+            }
+            $this->table->set($key, [self::COL_PATH => $data, self::COL_SEEN => 1]);
+        }
+    }
+
     public function addPaths(array $paths): array
     {
         $pathCount = count($paths);
@@ -84,14 +108,7 @@ class RewriteRules extends AbstractArrayTable implements RewriteRuleStorageInter
 
         foreach ($paths as $item) {
             $key = md5($item->path);
-            if ($this->table->exist($key)) {
-                $this->table->incr($key, self::COL_SEEN);
-            } else {
-                if ($shrink = self::rotateTable($this->table)) {
-                    $this->logger->debug("Table reached max size, shrinked to $shrink");
-                }
-                $this->table->set($key, [self::COL_PATH => $item->path, self::COL_SEEN => 1]);
-            }
+            $this->setOrIncrementString($key, $item->path);
         }
         $this->rw_lock->unlock();
         $tableCount = $this->table->count();

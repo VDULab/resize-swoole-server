@@ -7,7 +7,7 @@ use \Swoole\Lock;
 
 abstract class AbstractArrayTable
 {
-    const TABLE_MAX_COUNT = 700;
+    const TABLE_MAX_COUNT = 400;
     const BATCH_SIZE = 100;
     /**
      * @var \Swoole\Table
@@ -20,6 +20,10 @@ abstract class AbstractArrayTable
     protected $rw_lock;
 
     abstract public static function buildTable(): Table;
+
+    abstract public function setString(string $id, string $data): void;
+
+    abstract public function getString(string $id): ?string;
 
     public function __construct(Table $table)
     {

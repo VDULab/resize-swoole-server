@@ -22,14 +22,14 @@ class Connections extends AbstractArrayTable implements ConnectionsInterface
         return $table;
     }
 
-    public function set($id, $protocol = 'unknown')
+    public function setString(string $id, string $protocol = 'unknown'): void
     {
         $this->rw_lock->lock();
         $this->table->set($id, ['protocol' => $protocol]);
         $this->rw_lock->unlock();
     }
 
-    public function get($id)
+    public function getString(string $id): ?string
     {
         return $this->table->get($id, 'protocol');
     }
