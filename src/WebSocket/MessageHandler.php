@@ -38,6 +38,11 @@ class MessageHandler extends AbstractEventHandler
     {
         try {
             $msg = json_decode($frame->data);
+            if ($msg == null) {
+                $fd = $frame->fd;
+                $this->warning("Frame $fd has no data!");
+                return;
+            }
             $dest_txt = $msg->destination ?? "";
             $silent = false;
             $forcedHandled = [];
@@ -107,6 +112,9 @@ class MessageHandler extends AbstractEventHandler
         }
         $destinations = $this->getConnections($destination);
         $this->debug("Destinations: {data}", ['data' => $destinations]);
+        if ($destinations == null) {
+            return false;
+        }
         foreach ($destinations as $fd => $protocol) {
             if (! $frame || $frame->fd != $fd) {
                 $server->push($fd, $data);

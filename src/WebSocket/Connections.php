@@ -96,6 +96,6 @@ class Connections extends AbstractArrayTable implements ConnectionsInterface
 
     public function __toArray()
     {
-        $this->filterList();
+        return $this->filterList();
     }
 }

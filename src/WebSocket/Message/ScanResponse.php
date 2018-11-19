@@ -13,16 +13,6 @@ class ScanResponse extends BaseMessage
      */
     public $entries = [];
 
-    public static function buildFromScanResults(array $items): ScanResponse
-    {
-        $pathEntries = array_map(function ($key, $item) {
-            // return ['path' => $key, 'count' => $item];
-            return new PathEntry($key, $item);
-        }, array_keys($items), $items);
-
-        return new static($pathEntries);
-    }
-
     public function __construct(array $items)
     {
         parent::__construct(self::TYPE);

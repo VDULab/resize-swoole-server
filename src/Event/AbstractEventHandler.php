@@ -30,12 +30,12 @@ abstract class AbstractEventHandler implements LoggerInterface, ConnectionsInter
         $this->serverHandler = $handler;
     }
 
-    public static function requestUri(Request $request): string
+    public static function requestUri(Request $request): ?string
     {
         return $request->server['request_uri'];
     }
 
-    public function log($level, $data, $context = [])
+    public function log($level, $data, array $context = [])
     {
         return $this->serverHandler->log($level, $data, $context);
     }
@@ -51,5 +51,5 @@ abstract class AbstractEventHandler implements LoggerInterface, ConnectionsInter
         return $this->serverHandler->getConnectionsCount($protocol);
     }
 
-    abstract public static function getHandlerType();
+    abstract public static function getHandlerType(): string;
 }

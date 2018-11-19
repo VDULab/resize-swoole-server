@@ -32,7 +32,7 @@ class Message
             $return = json_encode($this);
             return $return;
         } catch (Exception $e) {
-            return false;
+            return null;
         }
     }
 
