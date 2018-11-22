@@ -36,6 +36,16 @@ class Message
         }
     }
 
+    public function toStdClass(): ?object
+    {
+        try {
+            $return = json_decode($this->toJson());
+            return $return;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
     public function getDestination(): ?string
     {
         if (property_exists($this, 'destination')) {

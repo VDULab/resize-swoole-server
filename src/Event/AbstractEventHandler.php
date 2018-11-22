@@ -4,7 +4,7 @@ namespace ResizeServer\Event;
 
 use Psr\Log\LoggerTrait;
 use Psr\Log\LoggerInterface;
-use Swoole\Http\Request;
+use \swoole_http_request as Request;
 
 use ResizeServer\WebSocketServerInterface;
 use ResizeServer\WebSocket\ConnectionsInterface;

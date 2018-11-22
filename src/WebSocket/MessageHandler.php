@@ -5,8 +5,8 @@
 
 namespace ResizeServer\WebSocket;
 
-use Swoole\WebSocket\Server;
-use Swoole\WebSocket\Frame;
+use \swoole_websocket_server as Server;
+use \swoole_websocket_frame as Frame;
 
 use Swoole\Http\Request;
 use Swoole\Http\Response;
@@ -17,6 +17,7 @@ use ResizeServer\Event\AbstractEventHandler;
 use ResizeServer\Http\RequestHandler;
 use ResizeServer\Http\RewriteRuleInterface;
 use ResizeServer\Redis\Logger as MessageLogger;
+use ResizeServer\Exception\InvalidJsonException;
 
 /**
  * MessageHandler class.
@@ -38,10 +39,8 @@ class MessageHandler extends AbstractEventHandler
     {
         try {
             $msg = json_decode($frame->data);
-            if ($msg == null) {
-                $fd = $frame->fd;
-                $this->warning("Frame $fd has no data!");
-                return;
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new InvalidJsonException("JSON decode error", json_last_error());
             }
             $dest_txt = $msg->destination ?? "";
             $silent = false;
@@ -66,9 +65,10 @@ class MessageHandler extends AbstractEventHandler
                     $this->scanDir($server, $msg, $frame);
                     break;
                 case 'togglePlay':
+                    $bool = $this->serverHandler->togglePlay($server);
+                    break;
                 case 'requestCurrent':
-                    $name = $msg->type;
-                    $this->serverHandler->$name($server, $msg, $frame);
+                    $this->serverHandler->requestCurrent($server);
                     break;
                 case 'showing':
                 case 'messageToAll':
@@ -82,10 +82,10 @@ class MessageHandler extends AbstractEventHandler
             if (! $silent) {
                 $this->info("$msg->type to $dest_txt");
             }
-        } catch (Exception $e) {
+        } catch (InvalidJsonException $e) {
             $this->error("exception received from {$frame->fd}:{$frame->data},"
                 . "opcode:{$frame->opcode},fin:{$frame->finish}");
-            $this->error($e);
+            $this->debug($e);
         }
     }
 

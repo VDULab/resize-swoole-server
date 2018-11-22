@@ -23,7 +23,7 @@
         "psr-4": {"ResizeServer\\": "src/"}
     },
     "scripts": {
-        "test": "vendor/bin/phpunit",
+        "test": "php -d swoole.use_namespace=Off vendor/bin/phpunit",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
         "cs-check": "vendor/bin/phpcs",
         "cs-fix": "vendor/bin/phpcbf"

@@ -198,7 +198,7 @@ class WebSocketServerHandler implements WebSocketServerInterface
         return $this->server->worker_id;
     }
 
-    public function togglePlay($server, $msg, $frame): bool
+    public function togglePlay($server): bool
     {
         $sliding = $this->isSliding();
         $this->debug("sliding {sliding}", ['sliding' => ($sliding) ? 'yes' : 'no']);
@@ -239,7 +239,7 @@ class WebSocketServerHandler implements WebSocketServerInterface
         };
     }
 
-    public function requestCurrent($server, $msg, $frame): void
+    public function requestCurrent($server): void
     {
         $sliding = $this->isSliding();
         $this->debug("We are {not}sliding", ['not' => ($sliding) ? '' : 'not ']);
